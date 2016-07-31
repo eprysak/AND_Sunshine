@@ -25,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Member;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -36,9 +37,16 @@ import java.util.ArrayList;
  */
 public class ForecastFragment extends Fragment {
 
+/* The ArrayAdapter is a private member variable
+* 1) Private because it is used only in the ForecastFragment class and no other classes
+* 2) Member Variable (mForecastAdapter) because it is a variable of an object/class (ForecastFragment)
+*    and not of a method, and it is a variable that will be used in multiple methods within
+*    the ForecastFragment class and needs to be referenced globally
+*/
+    private ArrayAdapter<String> mForecastAdapter;
+
     public ForecastFragment() {
     }
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -80,23 +88,23 @@ public class ForecastFragment extends Fragment {
         forecasts.add(4, "Fri - Foggy - 70/46");
         forecasts.add(5, "Sat - Sunny - 76/68");
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, forecasts);
+        mForecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, forecasts);
         //Create a ListView object mapped to R.id.listview_forecast in fragment_mail.xml
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
-        listView.setAdapter(adapter);
+        listView.setAdapter(mForecastAdapter);
 
         return rootView;
     }
 
 
-    private class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
+    public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
 
         //gets name of the task class to be used in logs
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
         /* The date/time conversion code is going to be moved outside the asynctask later,
- * so for convenience we're breaking it out into its own method now.
- */
+        * so for convenience we're breaking it out into its own method now.
+        */
         private String getReadableDateString(long time) {
             // Because the API returns a unix timestamp (measured in seconds),
             // it must be converted to milliseconds in order to be converted to valid date.
@@ -242,7 +250,7 @@ public class ForecastFragment extends Fragment {
                 //Create URL from completed Uri String
                 URL url = new URL(builtUri.toString());
 
-                Log.v(LOG_TAG, "Built URI " + builtUri.toString());
+                //Log.v(LOG_TAG, "Built URI " + builtUri.toString());
 
                 // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -272,7 +280,7 @@ public class ForecastFragment extends Fragment {
                 }
                 forecastJsonStr = buffer.toString();
 
-                Log.v(LOG_TAG, "Forecast JSON String" + forecastJsonStr);
+                //Log.v(LOG_TAG, "Forecast JSON String" + forecastJsonStr);
 
             } catch (IOException e) {
                 Log.e(LOG_TAG, "Error ", e);
@@ -303,6 +311,18 @@ public class ForecastFragment extends Fragment {
             return null;
         }
 
+        //Updates the ArrayAdapter with the data obtained from the server in the JSON string
+        //If the ArrayAdapter has content, the method will clear it first so that it is blank
+        //Then take each string in the result string array and add it to the ArrayAdapter
+        @Override
+        protected void onPostExecute(String[] result) {
+            if (result != null){
+                mForecastAdapter.clear();
+                for (String dayForecastStr : result){
+                    mForecastAdapter.add(dayForecastStr);
+                }
+            }
+        }
     }
 }
 
