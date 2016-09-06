@@ -1,5 +1,6 @@
 package com.example.android.sunshine.app;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -90,7 +91,11 @@ public class ForecastFragment extends Fragment {
         forecasts.add(4, "Fri - Foggy - 70/46");
         forecasts.add(5, "Sat - Sunny - 76/68");
 
-        mForecastAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, forecasts);
+        mForecastAdapter = new ArrayAdapter<String>(
+                getActivity(), //the current context
+                R.layout.list_item_forecast, //ID of the List Item layout
+                R.id.list_item_forecast_textview, //ID of the Text View to populate
+                forecasts); //forecast data (ArrayList of Strings)
         //Create a ListView object mapped to R.id.listview_forecast in fragment_mail.xml
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         listView.setAdapter(mForecastAdapter);
@@ -98,7 +103,12 @@ public class ForecastFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l){
                 String forecast = mForecastAdapter.getItem(position);
-                Toast.makeText(getActivity(), forecast, Toast.LENGTH_SHORT).show();
+                //Create an intent to go to the DetailActivity with the selected day's forecast data.
+                //startActivity() will prepare the intent to be received by the destination activity,
+                //carrying the intent information
+                Intent intent = new Intent(getActivity(), DetailActivity.class)
+                        .putExtra(Intent.EXTRA_TEXT, forecast);
+                startActivity(intent);
             }
         });
 
